@@ -1,11 +1,28 @@
-from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate
 # Create your views here.
 from .models import Post
+from .forms import PostForms
 
 def post_create(request):
-	return 	HttpResponse("<h1>Create</h1>")
+	"""
+	Methods creates the Posts
+	"""
+	form = PostForms(request.POST or None)
+	if form.is_valid():
+		instance = form.save(commit=False)
+		instance.save()
+		# message success
+		messages.success(request, "Successfully Created")
+		return HttpResponseRedirect(instance.get_obsolute_url())
+	context = {
+		"form": form,
+	}
+	return render(request, "post_form.html", context)
+
+
 
 def post_detail(request, id):
 	instance = get_object_or_404(Post, id=id)
@@ -13,8 +30,6 @@ def post_detail(request, id):
 		"title": instance.title,
 		"instance": instance,
 	}
-	""" Retrieve """
-	# return HttpResponse("<h1>Details</h1>")
 	return render(request, "post_detail.html", context)
 
 
@@ -26,25 +41,37 @@ def post_list(request):
 		"query_list": querySet,
 		"title":"list"
 	}
-	# if request.user.is_authenticated:
-	# 	context = {
-	# 		"title":"User's list test concatenate"
-	# 	}
-	# else:
-	# 	context = {
-	# 		"title":"list"
-	# 	}
-	return render(request, "index.html", context)
-	# return HttpResponse("<h1>List</h1>")
+	return render(request, "post_list.html", context)
 	
 
-def post_update(request):
-	""" update details """
-	return HttpResponse("<h1>Update</h1>")
+def post_update(request, id=None):
+	"""
+	It updates posts
+	"""
+	instance = get_object_or_404(Post, id=id)
+	form = PostForms(request.POST or None, instance = instance)
+	if form.is_valid():
+		instance = form.save(commit=False)
+		instance.save()
+		# message success
+		messages.success(request, "Successfuly updated")
+		return HttpResponseRedirect(instance.get_obsolute_url())
+	else:
+		messages.error(request, "Not update")
+	context = {
+	"title": instance.title,
+	"instance": instance,
+	"form": form,
+	}
+	return render(request, "post_form.html", context)
 
 
-def post_delete(reqest):
-	""" delete Details """
-	return HttpResponse("<h1>Delete</h1>")
-
+def post_delete(request, id=None):
+	"""
+	 delete Details 
+	"""
+	instance = get_object_or_404(Post, id=id)
+	instance.delete()
+	messages.success(request, "Successfuly Deleted")
+	return redirect("posts:list")
 

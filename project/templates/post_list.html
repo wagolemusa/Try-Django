@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+	{% block content %}
+
+		<h2>{{ title }} is working</h2>
+		{% for obj in query_list %}
+		{{ obj.id }}<br/>
+		<a href='{{ obj.get_obsolute_url }}'>{{ obj.title }}</a><br/>
+		{{ obj.content }}<br/>
+		{{ obj.timestamp }}<br/>
+		{{ obj.update }}<br/>
+
+		{% endfor %}
+
+	{% endblock content %}
