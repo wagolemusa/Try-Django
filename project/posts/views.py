@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
@@ -10,7 +11,7 @@ def post_create(request):
 	"""
 	Methods creates the Posts
 	"""
-	form = PostForms(request.POST or None)
+	form = PostForms(request.POST or None, request.FILES or None)
 	if form.is_valid():
 		instance = form.save(commit=False)
 		instance.save()
@@ -23,9 +24,8 @@ def post_create(request):
 	return render(request, "post_form.html", context)
 
 
-
-def post_detail(request, id):
-	instance = get_object_or_404(Post, id=id)
+def post_detail(request, slug=None):
+	instance = get_object_or_404(Post, slug=slug)
 	context = {
 		"title": instance.title,
 		"instance": instance,
@@ -35,7 +35,11 @@ def post_detail(request, id):
 
 def post_list(request):
 	""" list items """
-	querySet = Post.objects.all()
+	querySet_list = Post.objects.all()
+	paginator = Paginator(querySet_list, 3)
+
+	page = request.GET.get('page')
+	querySet = paginator.get_page(page)
 
 	context = {
 		"query_list": querySet,
@@ -49,7 +53,7 @@ def post_update(request, id=None):
 	It updates posts
 	"""
 	instance = get_object_or_404(Post, id=id)
-	form = PostForms(request.POST or None, instance = instance)
+	form = PostForms(request.POST or None, request.FILES or None, instance = instance)
 	if form.is_valid():
 		instance = form.save(commit=False)
 		instance.save()
