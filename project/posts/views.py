@@ -1,3 +1,5 @@
+# from urllib import quote_plus
+from urllib.parse import quote_plus  
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
@@ -26,9 +28,11 @@ def post_create(request):
 
 def post_detail(request, slug=None):
 	instance = get_object_or_404(Post, slug=slug)
+	share_string = quote_plus(instance.content)
 	context = {
 		"title": instance.title,
 		"instance": instance,
+		"share_string": share_string,
 	}
 	return render(request, "post_detail.html", context)
 
@@ -48,11 +52,11 @@ def post_list(request):
 	return render(request, "post_list.html", context)
 	
 
-def post_update(request, id=None):
+def post_update(request, slug=None):
 	"""
 	It updates posts
 	"""
-	instance = get_object_or_404(Post, id=id)
+	instance = get_object_or_404(Post, slug=slug)
 	form = PostForms(request.POST or None, request.FILES or None, instance = instance)
 	if form.is_valid():
 		instance = form.save(commit=False)
@@ -70,11 +74,11 @@ def post_update(request, id=None):
 	return render(request, "post_form.html", context)
 
 
-def post_delete(request, id=None):
+def post_delete(request, slug=None):
 	"""
 	 delete Details 
 	"""
-	instance = get_object_or_404(Post, id=id)
+	instance = get_object_or_404(Post, slug=slug)
 	instance.delete()
 	messages.success(request, "Successfuly Deleted")
 	return redirect("posts:list")
