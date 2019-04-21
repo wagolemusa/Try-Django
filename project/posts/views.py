@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect, Http404
 from django.contrib.auth import authenticate
+from django.utils import timezone
+
 # Create your views here.
 from .models import Post
 from .forms import PostForms
@@ -14,9 +16,6 @@ def post_create(request):
 	Methods creates the Posts
 	"""
 	if not request.user.is_staff or not request.user.is_superuser:
-		raise Http404
-
-	if request.user.is_authenticated():
 		raise Http404
 		
 	form = PostForms(request.POST or None, request.FILES or None)
@@ -35,6 +34,9 @@ def post_create(request):
 
 def post_detail(request, slug=None):
 	instance = get_object_or_404(Post, slug=slug)
+	if instance.publish > timezone.now().date() or instance.draft:
+		if not request.user.is_staff or not request.user.is_superuser:
+			raise Http404
 	share_string = quote_plus(instance.content)
 	context = {
 		"title": instance.title,
@@ -46,7 +48,11 @@ def post_detail(request, slug=None):
 
 def post_list(request):
 	""" list items """
+	today = timezone.now().date()
 	querySet_list = Post.objects.all()
+
+	if request.user.is_staff or request.user.is_superuser:
+		querySet_list = Post.objects.all()
 	paginator = Paginator(querySet_list, 3)
 
 	page = request.GET.get('page')
@@ -54,7 +60,8 @@ def post_list(request):
 
 	context = {
 		"query_list": querySet,
-		"title":"list"
+		"title":"list",
+		"today": today
 	}
 	return render(request, "post_list.html", context)
 	

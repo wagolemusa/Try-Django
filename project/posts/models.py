@@ -4,7 +4,13 @@ from django.conf import settings
 from django.db import models
 from django.db.models.signals import pre_save
 from django.utils.text import slugify
+from django.utils import timezone
 
+
+# Post.object.all()
+class PostManager(models.Manager):
+	def all(self, *args, **kwargs):
+		return super(PostManager, self).filter(draft=False).filter(publish_lte=timezone.now())
 
 # Create your models here.
 def upload_location(instance, filename):
@@ -28,6 +34,7 @@ class Post(models.Model):
 	publish = models.DateField(auto_now=False, auto_now_add=False)
 	updated = models.DateTimeField(auto_now=True, auto_now_add=False)
 	timestamp = models.DateTimeField(auto_now=False, auto_now_add=True)
+	# objects = PostManager()
 
 	def __unicode__(self):
 		return self.title
