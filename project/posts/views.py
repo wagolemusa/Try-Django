@@ -6,6 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect, Http404
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from django.db.models import Q
 
 # Create your views here.
 from .models import Post
@@ -53,8 +54,17 @@ def post_list(request):
 
 	if request.user.is_staff or request.user.is_superuser:
 		querySet_list = Post.objects.all()
-	paginator = Paginator(querySet_list, 3)
 
+	# Search posts
+	query = request.GET.get("q")
+	if query:
+		querySet_list = querySet_list.filter(
+							Q(title__icontains=query)|
+							Q(content__icontains=query)|
+							Q(user__username__icontains=query)
+							).distinct()
+
+	paginator = Paginator(querySet_list, 3)
 	page = request.GET.get('page')
 	querySet = paginator.get_page(page)
 
